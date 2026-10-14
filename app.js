@@ -50,7 +50,8 @@
   /* ---------- sidebar ---------- */
   function renderSidebar(active, filter = "") {
     const q = filter.trim().toLowerCase();
-    langList.innerHTML = LANGS
+    const onPlay = /^#\/play/.test(location.hash);
+    langList.innerHTML = '<a class="lang-link play-side' + (onPlay ? " active" : "") + '" href="#/play/python">💻 جرّب الكود</a>' + LANGS
       .filter((l) => !q || l.name.toLowerCase().includes(q) || l.id.includes(q))
       .map((l) =>
         '<a class="lang-link' + (l.id === active ? " active" : "") + '" href="#/lang/' + l.id + '">' +
@@ -67,7 +68,8 @@
     content.innerHTML =
       '<section class="hero"><h1>أهلاً بيك في Code Party 🎉</h1>' +
       "<p>اتعلم البرمجة خطوة بخطوة بـ ١٢ لغة، بأمثلة جاهزة تنسخها وتجربها. اختار لغة وابدأ!</p>" +
-      '<p style="margin-top:10px">تقدمك الكلي: <b>' + total + " / " + max + " درس</b></p></section>" +
+      '<p style="margin-top:10px">تقدمك الكلي: <b>' + total + " / " + max + " درس</b></p>" +
+      '<p style="margin-top:14px"><a class="btn hero-btn" href="#/play/python">💻 جرّب الكود دلوقتي</a></p></section>' +
       '<div class="grid">' +
       LANGS.map((l) =>
         '<a class="card" href="#/lang/' + l.id + '">' +
@@ -103,7 +105,11 @@
       '<div class="run-box">للتشغيل: <code>' + esc(lang.run) + "</code> (احفظ الكود في ملف باسم <code>main" + lang.ext + "</code>)</div>" +
       '<div class="row"><button class="btn" id="doneBtn">' + (isDone ? "إلغاء علامة الإنجاز" : "تمام، خلصت الدرس ✓") + "</button>" +
       (next ? '<button class="btn ghost" id="nextBtn">الدرس التالي ←</button>' : "") + "</div></article>" +
+      '<section class="lesson pg-section"><h2>جرّب بنفسك ▶</h2>' +
+      "<p>عدّل على الكود واضغط شغّل (أو Ctrl + Enter) وشوف الناتج.</p><div id=\"pg-host\"></div></section>" +
       '<section class="quiz"><h2>اختبر نفسك في ' + lang.name + "</h2><div id=\"quiz\"></div></section>";
+
+    Playground.mount($("#pg-host"), { langs: LANGS, langId: id, code: lang.code[topic.id], selectable: false });
 
     $(".copy").addEventListener("click", (e) => {
       const text = lang.code[topic.id];
@@ -117,6 +123,20 @@
 
     renderQuiz(lang);
     renderSidebar(id, $("#search").value);
+  }
+
+  function renderPlay(id) {
+    const lang = LANGS.find((l) => l.id === id) || LANGS[0];
+    document.title = "جرّب الكود | Code Party";
+    content.innerHTML =
+      '<section class="hero"><h1>جرّب الكود 💻</h1>' +
+      "<p>اختار لغة من القايمة، اكتب كودك أو عدّل على المثال، واضغط شغّل عشان يظهرلك الناتج.</p></section>" +
+      '<section class="lesson"><div id="pg-host"></div></section>';
+    Playground.mount($("#pg-host"), {
+      langs: LANGS, langId: lang.id, code: lang.code.hello, selectable: true,
+      onLangChange: (newId) => history.replaceState(null, "", "#/play/" + newId),
+    });
+    renderSidebar(null, $("#search").value);
   }
 
   function renderQuiz(lang) {
@@ -149,6 +169,7 @@
   function route() {
     const parts = location.hash.replace(/^#\/?/, "").split("/");
     if (parts[0] === "lang" && parts[1]) renderLang(parts[1], parts[2]);
+    else if (parts[0] === "play") renderPlay(parts[1]);
     else renderHome();
     sidebar.classList.remove("open");
     window.scrollTo({ top: 0 });
