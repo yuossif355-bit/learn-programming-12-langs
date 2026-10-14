@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://yuossif355-bit.github.io/learn-programming-12-langs/sitemap.xml
